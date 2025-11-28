@@ -10,6 +10,8 @@ const createTransport = () => {
   return nodemailer.createTransport({
    
     service: 'gmail',
+    port: 587,
+    secure: false,
     auth: {
       user: process.env.EMAIL,
       pass: process.env.EMAIL_PASSWORD,
@@ -49,7 +51,6 @@ async function sendResetEmail({ to, otp, expiryMinutes = 10 }) {
     html = html.replace(/{{OTP_CODE}}/g, otp);
     html = html.replace(/{{EXPIRY_TIME}}/g, expiryMinutes.toString());
   } else {
-    // Fallback HTML if template doesn't exist
     html = `
       <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 600px; margin: 0 auto; background-color: #ffffff; border: 2px solid #b2dfdb; border-radius: 8px; overflow: hidden;">
         <div style="background: linear-gradient(135deg, #00897b 0%, #00acc1 100%); padding: 30px 20px; text-align: center; border-bottom: 4px solid #00695c;">
@@ -77,4 +78,4 @@ async function sendResetEmail({ to, otp, expiryMinutes = 10 }) {
   });
 }
 
-export {  sendResetEmail };
+export { sendEmailWithTemplate, sendResetEmail };

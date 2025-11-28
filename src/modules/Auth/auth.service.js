@@ -77,17 +77,25 @@ if(!user){
         message:"User not found"
     })
 }
+const RESEND_COOLDOWN_MS = 2 * 60 * 1000;
+if (user.resetPasswordLastSent && (Date.now() - user.resetPasswordLastSent.getTime()) < RESEND_COOLDOWN_MS) {
+    const waitSeconds = Math.ceil((RESEND_COOLDOWN_MS - (Date.now() - user.resetPasswordLastSent.getTime())) / 1000);
+    return res.status(429).json({
+        message:`Please wait ${waitSeconds} seconds before requesting another OTP`
+    })
+}
 const otp=generateNumberOtp();
   const resetPasswordExpires = new Date(Date.now() + 10 * 60 * 1000); 
 user.resetPasswordToken=otp;
 user.resetPasswordExpires=resetPasswordExpires;
+user.resetPasswordLastSent=new Date();
 await user.save();
 try{
     await sendResetEmail({
-        to:email,
-        otp: otp,
+        to: email,
+        otp,
         expiryMinutes: 10
-    })
+    });
 }catch (emailError) {
     console.error('Failed to send reset email:', emailError);
     return next(new Error("Failed to send reset email", { cause: 500 }));
