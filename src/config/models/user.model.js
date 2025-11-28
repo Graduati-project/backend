@@ -36,6 +36,7 @@ const userSchema=new mongoose.Schema({
     default:false
     },
     deleteAt:{type:Date},
+    
     resetPasswordToken:{type:String},
     resetPasswordExpires:{type:Date}
 
@@ -43,6 +44,12 @@ const userSchema=new mongoose.Schema({
 
 timestamps:true
 })
+userSchema.set("toJSON", {
+  transform: (doc, ret, options) => {
+    delete ret.password;
+    return ret;
+  },
+});
 
 export const UserModel=mongoose.model.User||mongoose.model("User",userSchema);
 

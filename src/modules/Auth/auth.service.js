@@ -1,21 +1,31 @@
 import { UserModel } from "../../config/models/user.model.js";
-import { asyncHandler } from "../../utils/response/respone.js";
+import { sendResetEmail } from "../../utils/email/email.js";
+import { generateNumberOtp } from "../../utils/otp.js";
+import { asyncHandler, successResponse } from "../../utils/response/respone.js";
+import { compareHash, generateHash } from "../../utils/security/hash.js";
+import { generateAccessToken, generateRefreshToken } from "../../utils/security/token.js";
 
 
 
 export const Signup=asyncHandler(async(req,res,next)=>{
     const {firstName,lastName,email,password,confirmPassword,phone}=req.body;
-    if(await UserModel.findOne({email})){
-        return res.status(400).json({
-            message:"Email already exists"
-        })
-    }
+
+     if (password !== confirmPassword) {
+    return res.status(400).json({ message: "Passwords do not match" });
+  }
+
+  if(await UserModel.findOne({email})){
+      return res.status(400).json({
+          message:"Email already exists"
+      })
+  }
+   const hashedPassword = generateHash(password);
       
     const newUser=new UserModel({
         firstName,
         lastName,
         email,
-        password,
+        password:hashedPassword,
         phone  
     })
     await newUser.save();
@@ -43,17 +53,76 @@ export const login=asyncHandler(async(req,res,next)=>{
         message:"User not found"
     })
  }
- if(user.password!==password){
-    return res.status(400).json({
-        message:"Invalid email or password"
-    })
- }
+       const IsMatch=await compareHash(password,user.password);
+       if(!IsMatch){
+        return res.status(400).json({
+            message:"Invalid email or password"
+        })
+       }
+      const access_token = generateAccessToken({ id: user._id, email: user.email });
+const refresh_token = generateRefreshToken({ id: user._id, email: user.email });
+
     return res.status(200).json({
         message:"Login successful",
-        data:user
+       
+        access_token,
+        refresh_token
     })
+})
+export const sendResetPasswordEmail=asyncHandler(async(req,res,next)=>{
+const{email}=req.body;
+const user=await UserModel.findOne({email});
+if(!user){
+    return res.status(404).json({
+        message:"User not found"
+    })
+}
+const otp=generateNumberOtp();
+  const resetPasswordExpires = new Date(Date.now() + 10 * 60 * 1000); 
+user.resetPasswordToken=otp;
+user.resetPasswordExpires=resetPasswordExpires;
+await user.save();
+try{
+    await sendResetEmail({
+        to:email,
+        otp: otp,
+        expiryMinutes: 10
+    })
+}catch (emailError) {
+    console.error('Failed to send reset email:', emailError);
+    return next(new Error("Failed to send reset email", { cause: 500 }));
+  }
+return successResponse({
+    res,
+    message:"Reset code sent successfully to your email",
+})
 
 
 
+
+
+});
+export const resetPassword=asyncHandler(async(req,res,next)=>{
+   
+const { email, otp, newPassword } = req.body;
+const user=await UserModel.findOne({
+    email,
+    resetPasswordToken:otp,
+    resetPasswordExpires: { $gt: new Date() }
+})
+if(!user){
+    return res.status(400).json({
+        message:"Invalid or expired OTP"
+    })
+}
+const hashedPassword=generateHash(newPassword);
+user.password=hashedPassword;
+user.resetPasswordToken=undefined;
+user.resetPasswordExpires=undefined;
+await user.save();
+return successResponse({
+    res,
+    message:"Password reset successfully",  
 
 })
+});
