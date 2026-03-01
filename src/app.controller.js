@@ -4,10 +4,11 @@ dotenv.config({path:path.join('./.env')})
 import express from 'express';
 import connectDB from './config/connection.db.js';
 import authController from '../src/modules/Auth/auth.controller.js';
-
+import cors from 'cors';
 export const Bootsrap=async()=>{
 const app=express();
 const port=process.env.PORT 
+app.use(cors());
 app.use(express.json());
 await connectDB();
 
