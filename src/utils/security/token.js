@@ -1,14 +1,17 @@
 import jwt from "jsonwebtoken";
 
+export const tokenTypeEnum = { access: "access", refresh: "refresh" };
+export const sigEnum = { bearer: "Bearer", system: "System" };
+
 export const generateAccessToken = (payload) => {
   return jwt.sign(payload, process.env.ACCESS_USER_TOKEN_SIGNATURE, {
-    expiresIn: process.env.ACCESS_TOKEN_EXPIRES_IN,
+    expiresIn: parseInt(process.env.ACCESS_TOKEN_EXPIRES_IN),
   });
 };
 
 export const generateRefreshToken = (payload) => {
   return jwt.sign(payload, process.env.REFRESH_USER_TOKEN_SIGNATURE, {
-    expiresIn: process.env.REFRESH_TOKEN_EXPIRES_IN,
+    expiresIn: parseInt(process.env.REFRESH_TOKEN_EXPIRES_IN),
   });
 };
 
