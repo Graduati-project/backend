@@ -1,7 +1,7 @@
 import jwt from "jsonwebtoken";
 
 export const tokenTypeEnum = { access: "access", refresh: "refresh" };
-export const sigEnum = { bearer: "Bearer", system: "System" };
+
 
 export const generateAccessToken = (payload) => {
   return jwt.sign(payload, process.env.ACCESS_USER_TOKEN_SIGNATURE, {
