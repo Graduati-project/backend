@@ -66,8 +66,9 @@ const refresh_token = generateRefreshToken({ id: user._id, email: user.email });
         message:"Login successful",
        
         access_token,
-        refresh_token
-    })
+        refresh_token,
+        role:user.role
+    });
 })
 export const sendResetPasswordEmail=asyncHandler(async(req,res,next)=>{
 const{email}=req.body;
