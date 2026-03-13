@@ -92,13 +92,19 @@ user.resetPasswordExpires=resetPasswordExpires;
 user.resetPasswordLastSent=new Date();
 await user.save();
 
-sendResetEmail({
-    to: email,
-    otp,
-    expiryMinutes: 10
-}).catch((emailError) => {
+try {
+    await sendResetEmail({
+        to: email,
+        otp,
+        expiryMinutes: 10
+    });
+} catch (emailError) {
     console.error('Failed to send reset email:', emailError);
-});
+    return res.status(503).json({
+        success: false,
+        message: 'Unable to send email. Please try again later or check your email (including spam).',
+    });
+}
 
 return successResponse({
     res,

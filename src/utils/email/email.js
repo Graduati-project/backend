@@ -1,4 +1,5 @@
 import nodemailer from 'nodemailer';
+import { Resend } from 'resend';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import fs from 'fs';
@@ -6,23 +7,22 @@ import fs from 'fs';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+const useResend = () => !!process.env.RESEND_API_KEY;
+
 const createTransport = () => {
   return nodemailer.createTransport({
-    service: 'gmail',
+    host: 'smtp.gmail.com',
     port: 587,
     secure: false,
     auth: {
       user: process.env.EMAIL,
       pass: process.env.EMAIL_PASSWORD,
     },
-    connectionTimeout: 10000,
-    greetingTimeout: 10000,
   });
 };
 
 async function sendEmailWithTemplate({ to, subject, html, attachments = [] }) {
   const transporter = createTransport();
-  
   const logoPath = path.join(__dirname, 'logo.jpg');
   const hasLogo = attachments.some(att => att.cid === 'logo');
   if (!hasLogo && fs.existsSync(logoPath)) {
@@ -32,7 +32,6 @@ async function sendEmailWithTemplate({ to, subject, html, attachments = [] }) {
       cid: 'logo'
     });
   }
-  
   const info = await transporter.sendMail({
     from: process.env.EMAIL || '"No Reply" <no-reply@example.com>',
     to,
@@ -43,9 +42,43 @@ async function sendEmailWithTemplate({ to, subject, html, attachments = [] }) {
   return info;
 }
 
-async function sendResetEmail({ to, otp, expiryMinutes = 10 }) {
+async function sendResetEmailViaResend({ to, otp, expiryMinutes = 10 }) {
+  const resend = new Resend(process.env.RESEND_API_KEY);
   const otpTemplatePath = path.join(__dirname, 'otp-template.html');
-  
+  let html = '';
+  if (fs.existsSync(otpTemplatePath)) {
+    html = fs.readFileSync(otpTemplatePath, 'utf-8');
+    html = html.replace(/{{OTP_CODE}}/g, otp);
+    html = html.replace(/{{EXPIRY_TIME}}/g, String(expiryMinutes));
+  } else {
+    html = `<p>Your OTP is: <strong>${otp}</strong>. Valid for ${expiryMinutes} minutes.</p>`;
+  }
+  const logoPath = path.join(__dirname, 'logo.jpg');
+  const attachments = [];
+  if (fs.existsSync(logoPath)) {
+    attachments.push({
+      filename: 'logo.jpg',
+      content: fs.readFileSync(logoPath),
+      contentId: 'logo',
+    });
+  }
+  const from = process.env.RESEND_FROM || 'Health Care <onboarding@resend.dev>';
+  const { data, error } = await resend.emails.send({
+    from,
+    to: [to],
+    subject: 'Password Reset OTP - Health Care',
+    html,
+    attachments: attachments.length ? attachments : undefined,
+  });
+  if (error) throw new Error(error.message || 'Resend send failed');
+  return data;
+}
+
+async function sendResetEmail({ to, otp, expiryMinutes = 10 }) {
+  if (useResend()) {
+    return sendResetEmailViaResend({ to, otp, expiryMinutes });
+  }
+  const otpTemplatePath = path.join(__dirname, 'otp-template.html');
   let html = '';
   if (fs.existsSync(otpTemplatePath)) {
     html = fs.readFileSync(otpTemplatePath, 'utf-8');
@@ -71,7 +104,6 @@ async function sendResetEmail({ to, otp, expiryMinutes = 10 }) {
       </div>
     `;
   }
-  
   return sendEmailWithTemplate({
     to,
     subject: 'Password Reset OTP - Health Care',
