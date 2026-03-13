@@ -8,7 +8,6 @@ const __dirname = path.dirname(__filename);
 
 const createTransport = () => {
   return nodemailer.createTransport({
-   
     service: 'gmail',
     port: 587,
     secure: false,
@@ -16,6 +15,8 @@ const createTransport = () => {
       user: process.env.EMAIL,
       pass: process.env.EMAIL_PASSWORD,
     },
+    connectionTimeout: 10000,
+    greetingTimeout: 10000,
   });
 };
 
