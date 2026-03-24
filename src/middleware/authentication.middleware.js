@@ -27,7 +27,7 @@ export const authorization = ({ role = [] } = {}) => {
       const checkAuthorization = role.includes(req.user.role);
       if (!checkAuthorization) {
         return next(
-          new Error("Notttt authorized", {
+          new Error("Not authorized", {
             cause: 403,
           }),
         );

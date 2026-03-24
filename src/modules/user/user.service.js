@@ -189,3 +189,11 @@ export const profileImage = asyncHandler(async (req, res, next) => {
     message: "Profile image updated successfully",
   });
 });
+
+export const getAllUsers = asyncHandler(async (req, res, next) => {
+  const getUsers = await dbService.find({ model: UserModel });
+  return successResponse({
+    res,
+    data: { getUsers },
+  });
+});

@@ -44,3 +44,12 @@ export const findOneAndUpdate = async ({
 export const deleteOne = async ({ model, filter = {} } = {}) => {
   return await model.deleteOne(filter);
 };
+
+export const find = async ({
+  model,
+  filter = {},
+  select = "",
+  populate = [],
+} = {}) => {
+  return await model.find(filter).select(select).populate(populate);
+};

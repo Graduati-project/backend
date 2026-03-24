@@ -65,4 +65,12 @@ userRouter.patch(
   validation(validators.updateProfileImage),
   userService.profileImage,
 );
+
+userRouter.get(
+  "/all",
+  autMiddleware.authentication(),
+  autMiddleware.authorization({ role: endPoint.getAllUsers }),
+  userService.getAllUsers,
+);
+
 export default userRouter;
