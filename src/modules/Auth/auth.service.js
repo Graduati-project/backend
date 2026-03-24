@@ -37,6 +37,7 @@ export const Signup = asyncHandler(async (req, res, next) => {
     data: newUser,
   });
 });
+
 export const login = asyncHandler(async (req, res, next) => {
   const { email, password } = req.body;
   const user = await UserModel.findOne({ email });
@@ -66,9 +67,9 @@ export const login = asyncHandler(async (req, res, next) => {
 
   return res.status(200).json({
     message: "Login successful",
-
     access_token,
     refresh_token,
+    role: user.role,
   });
 });
 
