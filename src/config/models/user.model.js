@@ -1,8 +1,9 @@
 import mongoose from "mongoose";
-const roleenum = {
+export const roleenum = {
   admin: "admin",
   doctor: "doctor",
   patient: "patient",
+  staff: "staff",
 };
 const userSchema = new mongoose.Schema(
   {
@@ -23,6 +24,11 @@ const userSchema = new mongoose.Schema(
       required: true,
       unique: true,
     },
+    gender: {
+      type: String,
+      enum: ["male", "female"],
+      default: null,
+    },
     role: {
       type: String,
       enum: Object.values(roleenum), // ["admin", "doctor", "patient"]
@@ -35,14 +41,18 @@ const userSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
-    isDeleted: {
-      type: Boolean,
-      default: false,
+    picture: {
+      type: String,
     },
-    deleteAt: { type: Date },
+
+    deletedAt: { type: Date },
+    deletedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+    restoredAt: { type: Date },
+    restoredBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
     resetPasswordToken: { type: String },
     resetPasswordExpires: { type: Date },
     resetPasswordLastSent: { type: Date },
+    changeCredentialsTime: { type: Date },
   },
   {
     timestamps: true,
@@ -50,10 +60,10 @@ const userSchema = new mongoose.Schema(
 );
 userSchema.set("toJSON", {
   transform: (doc, ret, options) => {
-    delete ret.password; 
-    return ret; 
+    delete ret.password;
+    return ret;
   },
 });
- 
+
 export const UserModel =
-  mongoose.model.User || mongoose.model("User", userSchema); 
+  mongoose.model.User || mongoose.model("User", userSchema);

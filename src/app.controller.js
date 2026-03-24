@@ -2,12 +2,13 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import * as dotenv from "dotenv";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-dotenv.config({ path: path.resolve(__dirname, "./config/.env") });
+dotenv.config({ path: path.resolve(__dirname, ".env") });
 import express from "express";
 import connectDB from "./config/connection.db.js";
 import authController from "../src/modules/Auth/auth.controller.js";
 import cors from "cors";
 import userRouter from "./modules/user/user.controller.js";
+import { globalErrorHandler } from "./utils/response/respone.js";
 export const Bootsrap = async () => {
   const app = express();
   const port = process.env.PORT;
@@ -18,6 +19,7 @@ export const Bootsrap = async () => {
 
   app.use("/auth", authController);
   app.use("/user", userRouter);
+  app.use(globalErrorHandler);
   app.listen(port, () => {
     console.log(`Server is running on port ${port}`);
   });

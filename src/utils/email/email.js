@@ -1,17 +1,14 @@
-import nodemailer from 'nodemailer';
-import path from 'path';
-import { fileURLToPath } from 'url';
-import fs from 'fs';
+import nodemailer from "nodemailer";
+import path from "path";
+import { fileURLToPath } from "url";
+import fs from "fs";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const createTransport = () => {
   return nodemailer.createTransport({
-   
-    service: 'gmail',
-    port: 587,
-    secure: false,
+    service: "gmail",
     auth: {
       user: process.env.EMAIL,
       pass: process.env.EMAIL_PASSWORD,
@@ -21,33 +18,33 @@ const createTransport = () => {
 
 async function sendEmailWithTemplate({ to, subject, html, attachments = [] }) {
   const transporter = createTransport();
-  
-  const logoPath = path.join(__dirname, 'logo.jpg');
-  const hasLogo = attachments.some(att => att.cid === 'logo');
+
+  const logoPath = path.join(__dirname, "logo.jpg");
+  const hasLogo = attachments.some((att) => att.cid === "logo");
   if (!hasLogo && fs.existsSync(logoPath)) {
     attachments.push({
-      filename: 'logo.jpg',
+      filename: "logo.jpg",
       path: logoPath,
-      cid: 'logo'
+      cid: "logo",
     });
   }
-  
+
   const info = await transporter.sendMail({
     from: process.env.EMAIL || '"No Reply" <no-reply@example.com>',
     to,
     subject,
     html,
-    attachments
+    attachments,
   });
   return info;
 }
 
 async function sendResetEmail({ to, otp, expiryMinutes = 10 }) {
-  const otpTemplatePath = path.join(__dirname, 'otp-template.html');
-  
-  let html = '';
+  const otpTemplatePath = path.join(__dirname, "otp-template.html");
+
+  let html = "";
   if (fs.existsSync(otpTemplatePath)) {
-    html = fs.readFileSync(otpTemplatePath, 'utf-8');
+    html = fs.readFileSync(otpTemplatePath, "utf-8");
     html = html.replace(/{{OTP_CODE}}/g, otp);
     html = html.replace(/{{EXPIRY_TIME}}/g, expiryMinutes.toString());
   } else {
@@ -70,11 +67,11 @@ async function sendResetEmail({ to, otp, expiryMinutes = 10 }) {
       </div>
     `;
   }
-  
+
   return sendEmailWithTemplate({
     to,
-    subject: 'Password Reset OTP - Health Care',
-    html
+    subject: "Password Reset OTP - Health Care",
+    html,
   });
 }
 

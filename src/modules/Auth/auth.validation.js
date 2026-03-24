@@ -12,7 +12,7 @@ export const login={
 export const signup={
     body:Joi.object().keys({
         firstName:generalFields.firstName,
-        lastName:generalFields.LastName,
+        lastName:generalFields.lastName,
         email:generalFields.email,
         password:generalFields.password,
         confirmPassword:generalFields.confirmPassword,

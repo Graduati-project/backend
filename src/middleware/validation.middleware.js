@@ -1,9 +1,12 @@
 import Joi from "joi";
 import { asyncHandler } from "../utils/response/respone.js";
-
+import { Types } from "mongoose";
+import { logoutEnum } from "../utils/security/token.js";
+import { fileValidation } from "../utils/multer/local.multer.js";
 export const generalFields = {
   firstName: Joi.string().required().min(3).max(30),
-  LastName: Joi.string().required().min(3).max(30),
+  lastName: Joi.string().required().min(3).max(30),
+  gender: Joi.string().valid("male", "female").default(null),
   email: Joi.string()
     .email({
       minDomainSegments: 2,
@@ -12,9 +15,27 @@ export const generalFields = {
     .required(),
   password: Joi.string().required(),
   confirmPassword: Joi.ref("password"),
-  phone: Joi.string()
-
-    .required(),
+  phone: Joi.string().required(),
+  flag: Joi.string()
+    .valid(...Object.values(logoutEnum))
+    .default(logoutEnum.stayLoggedIn),
+  userId: Joi.string().custom((value, helpers) => {
+    if (!Types.ObjectId.isValid(value)) {
+      return helpers.message("invalid mongoose id");
+    }
+    return value;
+  }),
+  file: Joi.object().keys({
+    fieldname: Joi.string().required(),
+    originalname: Joi.string().required(),
+    encoding: Joi.string().required(),
+    destination: Joi.string().required(),
+    filename: Joi.string().required(),
+    finalPath: Joi.string().required(),
+    path: Joi.string().required(),
+    size: Joi.number().positive().required(),
+    mimetype: Joi.string().valid(...Object.values(fileValidation.image)),
+  }),
 };
 export const validation = (Schema) => {
   return asyncHandler(async (req, res, next) => {
