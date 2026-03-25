@@ -7,11 +7,15 @@ import {
 export const authentication = ({ tokenType = tokenTypeEnum.access } = {}) => {
   return async (req, res, next) => {
     try {
-      const { user, decoded } = await decodeToken({
+      const decodedData = await decodeToken({
         next,
         tokenType: tokenType,
         authorization: req.headers.authorization,
       });
+      if (!decodedData) {
+        return;
+      }
+      const { user, decoded } = decodedData;
       req.user = user;
       req.decoded = decoded;
       return next();

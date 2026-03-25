@@ -4,6 +4,6 @@ import { deleteAccount } from "./user.validation.js";
 export const endPoint = {
   restoreAccount: [roleenum.admin],
   deleteAccount: [roleenum.admin],
-  getAllUsers: [roleenum.admin],
-  addDoctor: [roleenum.admin],
+  getAllUsers: [roleenum.admin, roleenum.staff],
+  addDoctor: [roleenum.admin, roleenum.staff],
 };

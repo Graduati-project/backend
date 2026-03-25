@@ -5,6 +5,7 @@ import { compareHash, generateHash } from "../../utils/security/hash.js";
 import { logoutEnum, revokeToken } from "../../utils/security/token.js";
 import { DoctorModel } from "../../config/models/docter.model.js";
 import { SpecialtyModel } from "../../config/models/specialty.model.js";
+import { buildPaginationMeta, parsePagination } from "../../utils/pagination.js";
 
 export const profile = asyncHandler(async (req, res, next) => {
   return successResponse({
@@ -127,6 +128,13 @@ export const updatePassword = asyncHandler(async (req, res, next) => {
 
 export const deleteAccount = asyncHandler(async (req, res, next) => {
   const { userId } = req.params;
+  const targetUser = await dbService.findById({
+    model: UserModel,
+    id: userId,
+  });
+  if (!targetUser) {
+    return next(new Error("in valied user id", { cause: 400 }));
+  }
 
   const user = await dbService.deleteOne({
     model: UserModel,
@@ -138,6 +146,9 @@ export const deleteAccount = asyncHandler(async (req, res, next) => {
 
   if (!user.deletedCount) {
     return next(new Error("in valied user id", { cause: 400 }));
+  }
+  if (targetUser.role === roleenum.doctor) {
+    await DoctorModel.deleteOne({ userId: targetUser._id });
   }
   return successResponse({
     res,
@@ -193,15 +204,22 @@ export const profileImage = asyncHandler(async (req, res, next) => {
 });
 
 export const getAllUsers = asyncHandler(async (req, res, next) => {
-  const getUsers = await dbService.find({ model: UserModel });
+  const { page, limit, skip } = parsePagination(req.query);
+  const [getUsers, total] = await Promise.all([
+    UserModel.find().skip(skip).limit(limit),
+    UserModel.countDocuments(),
+  ]);
   return successResponse({
     res,
-    data: { getUsers },
+    data: {
+      getUsers,
+      pagination: buildPaginationMeta({ total, page, limit }),
+    },
   });
 });
 
 export const addDoctor = asyncHandler(async (req, res, next) => {
-  const { firstName, lastName, email, password, specialtyId } = req.body;
+  const { firstName, lastName, email, gender, phone, password, specialtyId } = req.body;
 
   const checkEmail = await dbService.findOne({
     model: UserModel,
@@ -219,6 +237,21 @@ export const addDoctor = asyncHandler(async (req, res, next) => {
     return next(new Error("Specialty not found", { cause: 404 }));
   }
 
+  const existingDoctorInSpecialty = await DoctorModel.findOne({
+    specialtyId,
+  }).populate({
+    path: "userId",
+    select: "deletedAt",
+  });
+  if (existingDoctorInSpecialty && existingDoctorInSpecialty.userId?.deletedAt) {
+    await DoctorModel.deleteOne({ _id: existingDoctorInSpecialty._id });
+  }
+  if (existingDoctorInSpecialty && !existingDoctorInSpecialty.userId?.deletedAt) {
+    return next(
+      new Error("This specialty already has a doctor assigned", { cause: 409 }),
+    );
+  }
+
   const hashedPassword = await generateHash(password);
   const newUser = await dbService.create({
     model: UserModel,
@@ -226,6 +259,8 @@ export const addDoctor = asyncHandler(async (req, res, next) => {
       firstName,
       lastName,
       email,
+      gender,
+      phone,
       password: hashedPassword,
       role: roleenum.doctor,
     },

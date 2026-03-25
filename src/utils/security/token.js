@@ -18,7 +18,7 @@ export const decodeToken = async ({
   try {
     const [bearer, token] = authorization.split(" ") || [];
     if (!bearer || !token || bearer !== "Bearer") {
-      next(
+      return next(
         new Error("Missing or invalid Bearer token or invalid token", {
           cause: 401,
         }),
