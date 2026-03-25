@@ -73,4 +73,12 @@ userRouter.get(
   userService.getAllUsers,
 );
 
+userRouter.post(
+  "/add-doctor",
+  autMiddleware.authentication(),
+  autMiddleware.authorization({ role: endPoint.addDoctor }),
+  validation(validators.addDoctor),
+  userService.addDoctor,
+);
+
 export default userRouter;

@@ -5,4 +5,5 @@ export const endPoint = {
   restoreAccount: [roleenum.admin],
   deleteAccount: [roleenum.admin],
   getAllUsers: [roleenum.admin],
+  addDoctor: [roleenum.admin],
 };

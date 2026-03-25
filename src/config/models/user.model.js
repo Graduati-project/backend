@@ -29,9 +29,19 @@ const userSchema = new mongoose.Schema(
       enum: ["male", "female"],
       default: null,
     },
+    age: {
+      type: Number,
+      min: 0,
+    },
+    address: {
+      type: String,
+    },
+    medicalHistory: {
+      type: String,
+    },
     role: {
       type: String,
-      enum: Object.values(roleenum), // ["admin", "doctor", "patient"]
+      enum: Object.values(roleenum),
       default: roleenum.patient,
     },
     phone: {
@@ -44,7 +54,6 @@ const userSchema = new mongoose.Schema(
     picture: {
       type: String,
     },
-
     deletedAt: { type: Date },
     deletedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
     restoredAt: { type: Date },

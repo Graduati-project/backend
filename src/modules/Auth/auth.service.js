@@ -22,7 +22,7 @@ export const Signup = asyncHandler(async (req, res, next) => {
       message: "Email already exists",
     });
   }
-  const hashedPassword = generateHash(password);
+  const hashedPassword = await generateHash(password);
 
   const newUser = new UserModel({
     firstName,
@@ -129,7 +129,7 @@ export const resetPassword = asyncHandler(async (req, res, next) => {
       message: "Invalid or expired OTP",
     });
   }
-  const hashedPassword = generateHash(newPassword);
+  const hashedPassword = await generateHash(newPassword);
   user.password = hashedPassword;
   user.resetPasswordToken = undefined;
   user.resetPasswordExpires = undefined;

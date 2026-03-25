@@ -3,6 +3,8 @@ import * as dbService from "../../config/db.service.js";
 import { roleenum, UserModel } from "../../config/models/user.model.js";
 import { compareHash, generateHash } from "../../utils/security/hash.js";
 import { logoutEnum, revokeToken } from "../../utils/security/token.js";
+import { DoctorModel } from "../../config/models/docter.model.js";
+import { SpecialtyModel } from "../../config/models/specialty.model.js";
 
 export const profile = asyncHandler(async (req, res, next) => {
   return successResponse({
@@ -195,5 +197,51 @@ export const getAllUsers = asyncHandler(async (req, res, next) => {
   return successResponse({
     res,
     data: { getUsers },
+  });
+});
+
+export const addDoctor = asyncHandler(async (req, res, next) => {
+  const { firstName, lastName, email, password, specialtyId } = req.body;
+
+  const checkEmail = await dbService.findOne({
+    model: UserModel,
+    filter: { email },
+  });
+  if (checkEmail) {
+    return next(new Error("Email already exists", { cause: 400 }));
+  }
+
+  const specialty = await dbService.findById({
+    model: SpecialtyModel,
+    id: specialtyId,
+  });
+  if (!specialty) {
+    return next(new Error("Specialty not found", { cause: 404 }));
+  }
+
+  const hashedPassword = await generateHash(password);
+  const newUser = await dbService.create({
+    model: UserModel,
+    data: {
+      firstName,
+      lastName,
+      email,
+      password: hashedPassword,
+      role: roleenum.doctor,
+    },
+  });
+
+  const doctor = await dbService.create({
+    model: DoctorModel,
+    data: {
+      userId: newUser._id,
+      specialtyId,
+    },
+  });
+
+  return successResponse({
+    res,
+    message: "Doctor added successfully",
+    data: { user: newUser, doctor },
   });
 });

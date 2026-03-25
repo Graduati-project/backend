@@ -48,3 +48,16 @@ export const logout = {
 export const updateProfileImage = {
   file: generalFields.file.required(),
 };
+
+export const addDoctor = {
+  body: Joi.object()
+    .keys({
+      firstName: generalFields.firstName.required(),
+      lastName: generalFields.lastName.required(),
+      email: generalFields.email.required(),
+      password: generalFields.password.required(),
+      confirmPassword: Joi.string().valid(Joi.ref("password")).required(),
+      specialtyId: generalFields.userId.required(),
+    })
+    .required(),
+};
