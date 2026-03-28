@@ -13,7 +13,17 @@ patientRouter.use(
 );
 
 patientRouter.get(
-  "/specialties",
+  "/specialties/overview/:specialtyId",
+  validation(patientValidation.specialtyOverviewByIdParam),
+  patientService.getSpecialtiesDoctorOverview,
+);
+patientRouter.get(
+  "/specialties/overview",
+  validation(patientValidation.specialtyQuery),
+  patientService.getSpecialtiesDoctorOverview,
+);
+patientRouter.get(
+  "/specialties/",
   validation(patientValidation.specialtyQuery),
   patientService.getSpecialtiesWithDoctors,
 );
@@ -24,6 +34,11 @@ patientRouter.post(
   "/book",
   validation(patientValidation.bookAppointment),
   patientService.bookAppointment,
+);
+patientRouter.patch(
+  "/appointments/:appointmentId/cancel",
+  validation(patientValidation.cancelAppointment),
+  patientService.cancelAppointment,
 );
 
 export default patientRouter;

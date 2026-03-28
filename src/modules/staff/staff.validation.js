@@ -23,3 +23,17 @@ export const patientIdParam = {
     })
     .required(),
 };
+
+export const addStaff = {
+  body: Joi.object()
+    .keys({
+      firstName: generalFields.firstName.required(),
+      lastName: generalFields.lastName.required(),
+      email: generalFields.email.required(),
+      gender: generalFields.gender.required(),
+      phone: generalFields.phone.required(),
+      password: generalFields.password.required(),
+      confirmPassword: Joi.string().valid(Joi.ref("password")).required(),
+    })
+    .required(),
+};

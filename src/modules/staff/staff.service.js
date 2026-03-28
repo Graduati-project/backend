@@ -71,6 +71,39 @@ export const addDoctor = asyncHandler(async (req, res, next) => {
   });
 });
 
+export const addStaff = asyncHandler(async (req, res, next) => {
+  const { firstName, lastName, email, gender, phone, password } = req.body;
+
+  const checkEmail = await dbService.findOne({
+    model: UserModel,
+    filter: { email },
+  });
+  if (checkEmail) {
+    return next(new Error("Email already exists", { cause: 400 }));
+  }
+
+  const hashedPassword = await generateHash(password);
+  const newUser = await dbService.create({
+    model: UserModel,
+    data: {
+      firstName,
+      lastName,
+      email,
+      gender,
+      phone,
+      password: hashedPassword,
+      role: roleenum.staff,
+    },
+  });
+
+  return successResponse({
+    res,
+    statusCode: 201,
+    message: "Staff added successfully",
+    data: { user: newUser },
+  });
+});
+
 export const getAllPatients = asyncHandler(async (req, res) => {
   const { page, limit, skip } = parsePagination(req.query);
   const [patients, total] = await Promise.all([

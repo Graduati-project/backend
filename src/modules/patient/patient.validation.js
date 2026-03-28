@@ -11,6 +11,14 @@ export const specialtyQuery = {
     .required(),
 };
 
+export const specialtyOverviewByIdParam = {
+  params: Joi.object()
+    .keys({
+      specialtyId: generalFields.userId.required(),
+    })
+    .required(),
+};
+
 export const bookAppointment = {
   body: Joi.object()
     .keys({
@@ -24,6 +32,14 @@ export const bookAppointment = {
       day: Joi.string()
         .valid(...Object.values(dayEnum))
         .required(),
+    })
+    .required(),
+};
+
+export const cancelAppointment = {
+  params: Joi.object()
+    .keys({
+      appointmentId: generalFields.userId.required(),
     })
     .required(),
 };

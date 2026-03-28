@@ -17,6 +17,11 @@ staffRouter.post(
   validation(staffValidation.addDoctor),
   staffService.addDoctor,
 );
+staffRouter.post(
+  "/staff",
+  validation(staffValidation.addStaff),
+  staffService.addStaff,
+);
 staffRouter.get("/patients", staffService.getAllPatients);
 staffRouter.get(
   "/patients/:patientId",
