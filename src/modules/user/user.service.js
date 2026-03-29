@@ -5,12 +5,34 @@ import { compareHash, generateHash } from "../../utils/security/hash.js";
 import { logoutEnum, revokeToken } from "../../utils/security/token.js";
 import { DoctorModel } from "../../config/models/docter.model.js";
 import { SpecialtyModel } from "../../config/models/specialty.model.js";
+import { TreatmentModel } from "../../config/models/treatment.model.js";
 import { buildPaginationMeta, parsePagination } from "../../utils/pagination.js";
 
+const treatmentPopulateForPatient = [
+  {
+    path: "doctorId",
+    populate: [
+      { path: "userId", select: "firstName lastName email phone picture" },
+      { path: "specialtyId", select: "name" },
+    ],
+  },
+];
+
 export const profile = asyncHandler(async (req, res, next) => {
+  const userObj = req.user.toObject ? req.user.toObject() : { ...req.user };
+  if (req.user.role === roleenum.patient) {
+    const treatments = await TreatmentModel.find({ patientId: req.user._id })
+      .populate(treatmentPopulateForPatient)
+      .sort({ startDate: -1 })
+      .lean();
+    return successResponse({
+      res,
+      data: { ...userObj, treatments },
+    });
+  }
   return successResponse({
     res,
-    data: req.user,
+    data: userObj,
   });
 });
 

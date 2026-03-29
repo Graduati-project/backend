@@ -104,9 +104,37 @@ export const myPatients = asyncHandler(async (req, res, next) => {
     }
   });
 
+  const patientsList = Array.from(uniquePatientsMap.values());
+  const patientMongoIds = patientsList.map((p) => p._id);
+
+  const treatmentsForPatients =
+    patientMongoIds.length === 0
+      ? []
+      : await TreatmentModel.find({
+          doctorId: doctor._id,
+          patientId: { $in: patientMongoIds },
+        })
+          .sort({ startDate: -1 })
+          .lean();
+
+  const treatmentsByPatient = new Map();
+  for (const t of treatmentsForPatients) {
+    const key = String(t.patientId);
+    if (!treatmentsByPatient.has(key)) treatmentsByPatient.set(key, []);
+    treatmentsByPatient.get(key).push(t);
+  }
+
+  const patientsWithTreatments = patientsList.map((p) => {
+    const plain = p.toObject ? p.toObject() : { ...p };
+    return {
+      ...plain,
+      treatments: treatmentsByPatient.get(String(p._id)) ?? [],
+    };
+  });
+
   return successResponse({
     res,
-    data: { patients: Array.from(uniquePatientsMap.values()) },
+    data: { patients: patientsWithTreatments },
   });
 });
 
@@ -126,16 +154,15 @@ export const createTreatment = asyncHandler(async (req, res, next) => {
     filter: {
       doctorId: doctor._id,
       patientId,
-      status: {
-        $in: [appointmentStatusEnum.pending, appointmentStatusEnum.confirmed],
-      },
+      status: { $ne: appointmentStatusEnum.cancelled },
     },
   });
   if (!hasRelationship) {
     return next(
-      new Error("Doctor can add treatment only for assigned patients", {
-        cause: 403,
-      }),
+      new Error(
+        "Doctor can add treatment only for patients with at least one non-cancelled appointment with this doctor. Use the patient's User _id as patientId.",
+        { cause: 403 },
+      ),
     );
   }
 

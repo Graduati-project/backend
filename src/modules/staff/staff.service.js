@@ -104,6 +104,16 @@ export const addStaff = asyncHandler(async (req, res, next) => {
   });
 });
 
+const treatmentPopulateForList = [
+  {
+    path: "doctorId",
+    populate: [
+      { path: "userId", select: "firstName lastName email phone" },
+      { path: "specialtyId", select: "name" },
+    ],
+  },
+];
+
 export const getAllPatients = asyncHandler(async (req, res) => {
   const { page, limit, skip } = parsePagination(req.query);
   const [patients, total] = await Promise.all([
@@ -112,14 +122,36 @@ export const getAllPatients = asyncHandler(async (req, res) => {
         "firstName lastName email phone age gender address medicalHistory createdAt",
       )
       .skip(skip)
-      .limit(limit),
+      .limit(limit)
+      .lean(),
     UserModel.countDocuments({ role: roleenum.patient }),
   ]);
+
+  const patientIds = patients.map((p) => p._id);
+  const allTreatments =
+    patientIds.length === 0
+      ? []
+      : await TreatmentModel.find({ patientId: { $in: patientIds } })
+          .populate(treatmentPopulateForList)
+          .sort({ startDate: -1 })
+          .lean();
+
+  const treatmentsByPatient = new Map();
+  for (const t of allTreatments) {
+    const key = String(t.patientId);
+    if (!treatmentsByPatient.has(key)) treatmentsByPatient.set(key, []);
+    treatmentsByPatient.get(key).push(t);
+  }
+
+  const patientsWithTreatments = patients.map((p) => ({
+    ...p,
+    treatments: treatmentsByPatient.get(String(p._id)) ?? [],
+  }));
 
   return successResponse({
     res,
     data: {
-      patients,
+      patients: patientsWithTreatments,
       pagination: buildPaginationMeta({ total, page, limit }),
     },
   });
@@ -166,8 +198,13 @@ export const getPatientDetails = asyncHandler(async (req, res, next) => {
     ],
   });
 
+  const patientPlain = patient.toObject ? patient.toObject() : patient;
+
   return successResponse({
     res,
-    data: { patient, appointments, treatments },
+    data: {
+      patient: { ...patientPlain, treatments },
+      appointments,
+    },
   });
 });
