@@ -72,33 +72,38 @@ export const seedSpecialties = async () => {
   console.log(
     `Seeded ${missingSpecialties.length} missing specialties successfully`,
   );
+};
 
+export const seedDoctor = async () => {
   const existingDoctor = await UserModel.findOne({ email: "admin@test.com" });
-  if (!existingDoctor) {
-    const hashedPassword = await generateHash("123456");
-    const specialty = await SpecialtyModel.findOne({ name: "Dentistry" });
-
-    const user = await dbService.create({
-      model: UserModel,
-      data: {
-        firstName: "Admin",
-        lastName: "Doctor",
-        email: "admin@test.com",
-        phone: "01000000000",
-        gender: "male",
-        password: hashedPassword,
-        role: roleenum.doctor,
-      },
-    });
-
-    await dbService.create({
-      model: DoctorModel,
-      data: {
-        userId: user._id,
-        specialtyId: specialty._id,
-      },
-    });
-
-    console.log("Seeded doctor account (admin@test.com) successfully");
+  if (existingDoctor) {
+    console.log("Doctor account already seeded, skipping...");
+    return;
   }
+
+  const hashedPassword = await generateHash("123456");
+  const specialty = await SpecialtyModel.findOne({ name: "Dentistry" });
+
+  const user = await dbService.create({
+    model: UserModel,
+    data: {
+      firstName: "Admin",
+      lastName: "Doctor",
+      email: "admin@test.com",
+      phone: "01000000000",
+      gender: "male",
+      password: hashedPassword,
+      role: roleenum.doctor,
+    },
+  });
+
+  await dbService.create({
+    model: DoctorModel,
+    data: {
+      userId: user._id,
+      specialtyId: specialty._id,
+    },
+  });
+
+  console.log("Seeded doctor account (admin@test.com) successfully");
 };
