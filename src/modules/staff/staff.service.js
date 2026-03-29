@@ -6,10 +6,14 @@ import { AppointmentModel } from "../../config/models/appointment.model.js";
 import { TreatmentModel } from "../../config/models/treatment.model.js";
 import { generateHash } from "../../utils/security/hash.js";
 import { asyncHandler, successResponse } from "../../utils/response/respone.js";
-import { buildPaginationMeta, parsePagination } from "../../utils/pagination.js";
+import {
+  buildPaginationMeta,
+  parsePagination,
+} from "../../utils/pagination.js";
 
 export const addDoctor = asyncHandler(async (req, res, next) => {
-  const { firstName, lastName, email, gender, phone, password, specialtyId } = req.body;
+  const { firstName, lastName, email, gender, phone, password, specialtyId } =
+    req.body;
 
   const checkEmail = await dbService.findOne({
     model: UserModel,
@@ -33,10 +37,16 @@ export const addDoctor = asyncHandler(async (req, res, next) => {
     path: "userId",
     select: "deletedAt",
   });
-  if (existingDoctorInSpecialty && existingDoctorInSpecialty.userId?.deletedAt) {
+  if (
+    existingDoctorInSpecialty &&
+    existingDoctorInSpecialty.userId?.deletedAt
+  ) {
     await DoctorModel.deleteOne({ _id: existingDoctorInSpecialty._id });
   }
-  if (existingDoctorInSpecialty && !existingDoctorInSpecialty.userId?.deletedAt) {
+  if (
+    existingDoctorInSpecialty &&
+    !existingDoctorInSpecialty.userId?.deletedAt
+  ) {
     return next(
       new Error("This specialty already has a doctor assigned", { cause: 409 }),
     );

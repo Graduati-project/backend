@@ -5,7 +5,10 @@ import {
   AppointmentModel,
   appointmentStatusEnum,
 } from "../../config/models/appointment.model.js";
-import { buildPaginationMeta, parsePagination } from "../../utils/pagination.js";
+import {
+  buildPaginationMeta,
+  parsePagination,
+} from "../../utils/pagination.js";
 
 const dayToIndex = {
   sunday: 0,
@@ -86,7 +89,9 @@ export const reservation = asyncHandler(async (req, res, next) => {
 
   const patientHasDoctorInSameSpecialty = await AppointmentModel.findOne({
     patientId,
-    status: { $in: [appointmentStatusEnum.pending, appointmentStatusEnum.confirmed] },
+    status: {
+      $in: [appointmentStatusEnum.pending, appointmentStatusEnum.confirmed],
+    },
     date: { $gte: new Date() },
   }).populate({
     path: "doctorId",
@@ -97,10 +102,9 @@ export const reservation = asyncHandler(async (req, res, next) => {
   });
   if (patientHasDoctorInSameSpecialty?.doctorId) {
     return next(
-      new Error(
-        "You already have another doctor in this specialty",
-        { cause: 409 },
-      ),
+      new Error("You already have another doctor in this specialty", {
+        cause: 409,
+      }),
     );
   }
 
