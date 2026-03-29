@@ -9,7 +9,7 @@ import authController from "../src/modules/Auth/auth.controller.js";
 import cors from "cors";
 import userRouter from "./modules/user/user.controller.js";
 import { globalErrorHandler } from "./utils/response/respone.js";
-import { seedSpecialties, seedDoctor } from "./config/seed/specialties.seed.js";
+import { seedSpecialties, seedDoctors } from "./config/seed/specialties.seed.js";
 import appointmentsRouter from "./modules/appointments/appointments.controller.js";
 import doctorAppointmentsRouter from "./modules/Doctor/appointments.controller.js";
 import staffRouter from "./modules/staff/staff.controller.js";
@@ -22,7 +22,7 @@ export const Bootsrap = async () => {
   app.use(express.json());
   await connectDB();
   await seedSpecialties();
-  await seedDoctor();
+  await seedDoctors();
 
   app.use("/auth", authController);
   app.use("/user", userRouter);
