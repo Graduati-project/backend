@@ -218,3 +218,63 @@ export const getPatientDetails = asyncHandler(async (req, res, next) => {
     },
   });
 });
+
+export const getAllDoctors = asyncHandler(async (req, res) => {
+  const { page, limit, skip } = parsePagination(req.query);
+
+  const [doctors, total] = await Promise.all([
+    DoctorModel.find()
+      .populate([
+        { path: "userId", select: "firstName lastName email phone picture gender" },
+        { path: "specialtyId", select: "name schedule maxAppointmentsPerDay" },
+      ])
+      .skip(skip)
+      .limit(limit)
+      .lean(),
+    DoctorModel.countDocuments(),
+  ]);
+
+  const validDoctors = doctors.filter((d) => d.userId && d.specialtyId);
+
+  return successResponse({
+    res,
+    data: {
+      doctors: validDoctors,
+      pagination: buildPaginationMeta({ total, page, limit }),
+    },
+  });
+});
+
+export const getAllAppointments = asyncHandler(async (req, res) => {
+  const { page, limit, skip } = parsePagination(req.query);
+
+  const [appointments, total] = await Promise.all([
+    AppointmentModel.find()
+      .populate([
+        {
+          path: "doctorId",
+          populate: [
+            { path: "userId", select: "firstName lastName email phone" },
+            { path: "specialtyId", select: "name" },
+          ],
+        },
+        {
+          path: "patientId",
+          select: "firstName lastName email phone",
+        },
+      ])
+      .sort({ date: -1 })
+      .skip(skip)
+      .limit(limit)
+      .lean(),
+    AppointmentModel.countDocuments(),
+  ]);
+
+  return successResponse({
+    res,
+    data: {
+      appointments,
+      pagination: buildPaginationMeta({ total, page, limit }),
+    },
+  });
+});

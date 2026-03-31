@@ -23,6 +23,8 @@ staffRouter.post(
   staffService.addStaff,
 );
 staffRouter.get("/patients", staffService.getAllPatients);
+staffRouter.get("/doctors", staffService.getAllDoctors);
+staffRouter.get("/appointments", staffService.getAllAppointments);
 staffRouter.get(
   "/patients/:patientId",
   validation(staffValidation.patientIdParam),

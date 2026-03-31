@@ -23,4 +23,6 @@ const doctorSchema = new mongoose.Schema(
 export const DoctorModel =
   mongoose.model.Doctor || mongoose.model("Doctor", doctorSchema);
 
-DoctorModel.syncIndexes();
+DoctorModel.syncIndexes().catch((err) => {
+  console.error("DoctorModel.syncIndexes failed:", err?.message || err);
+});
