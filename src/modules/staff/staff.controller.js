@@ -25,10 +25,12 @@ staffRouter.post(
 staffRouter.get("/patients", staffService.getAllPatients);
 staffRouter.get("/doctors", staffService.getAllDoctors);
 staffRouter.get("/appointments", staffService.getAllAppointments);
+staffRouter.get("/specialties", staffService.getAllSpecialties);
 staffRouter.get(
   "/patients/:patientId",
   validation(staffValidation.patientIdParam),
   staffService.getPatientDetails,
 );
+
 
 export default staffRouter;

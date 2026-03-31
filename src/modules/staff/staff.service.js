@@ -31,26 +31,7 @@ export const addDoctor = asyncHandler(async (req, res, next) => {
     return next(new Error("Specialty not found", { cause: 404 }));
   }
 
-  const existingDoctorInSpecialty = await DoctorModel.findOne({
-    specialtyId,
-  }).populate({
-    path: "userId",
-    select: "deletedAt",
-  });
-  if (
-    existingDoctorInSpecialty &&
-    existingDoctorInSpecialty.userId?.deletedAt
-  ) {
-    await DoctorModel.deleteOne({ _id: existingDoctorInSpecialty._id });
-  }
-  if (
-    existingDoctorInSpecialty &&
-    !existingDoctorInSpecialty.userId?.deletedAt
-  ) {
-    return next(
-      new Error("This specialty already has a doctor assigned", { cause: 409 }),
-    );
-  }
+  // Specialty can have multiple doctors (no uniqueness constraint in code).
 
   const hashedPassword = await generateHash(password);
   const newUser = await dbService.create({
@@ -66,13 +47,26 @@ export const addDoctor = asyncHandler(async (req, res, next) => {
     },
   });
 
-  const doctor = await dbService.create({
-    model: DoctorModel,
-    data: {
-      userId: newUser._id,
-      specialtyId,
-    },
-  });
+  let doctor;
+  try {
+    doctor = await dbService.create({
+      model: DoctorModel,
+      data: {
+        userId: newUser._id,
+        specialtyId,
+      },
+    });
+  } catch (err) {
+    if (err && err.code === 11000) {
+      return next(
+        new Error(
+          "Specialty unique index still exists. Please remove the unique index on doctors.specialtyId and try again.",
+          { cause: 409 },
+        ),
+      );
+    }
+    throw err;
+  }
 
   return successResponse({
     res,
@@ -274,6 +268,28 @@ export const getAllAppointments = asyncHandler(async (req, res) => {
     res,
     data: {
       appointments,
+      pagination: buildPaginationMeta({ total, page, limit }),
+    },
+  });
+});
+
+export const getAllSpecialties = asyncHandler(async (req, res) => {
+  const { page, limit, skip } = parsePagination(req.query);
+
+  const [specialties, total] = await Promise.all([
+    SpecialtyModel.find()
+      .select("name schedule maxAppointmentsPerDay createdAt updatedAt")
+      .sort({ name: 1 })
+      .skip(skip)
+      .limit(limit)
+      .lean(),
+    SpecialtyModel.countDocuments(),
+  ]);
+
+  return successResponse({
+    res,
+    data: {
+      specialties,
       pagination: buildPaginationMeta({ total, page, limit }),
     },
   });
